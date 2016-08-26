@@ -120,7 +120,7 @@ public final class Utils {
      * Convert the {@link InputStream} into a String which contains the
      * whole JSON response from the server.
      */
-    private static String readFromStream(InputStream inputStream) throws IOException {
+    public static String readFromStream(InputStream inputStream) throws IOException {
         StringBuilder output = new StringBuilder();
         if (inputStream != null) {
             InputStreamReader inputStreamReader = new InputStreamReader(inputStream, Charset.forName("UTF-8"));
@@ -138,7 +138,7 @@ public final class Utils {
      * Return an {@link Event} object by parsing out information
      * about the first earthquake from the input earthquakeJSON string.
      */
-    private static Event extractFeatureFromJson(String earthquakeJSON) {
+    public static Event extractFeatureFromJson(String earthquakeJSON) {
         // If the JSON string is empty or null, then return early.
         if (TextUtils.isEmpty(earthquakeJSON)) {
             return null;

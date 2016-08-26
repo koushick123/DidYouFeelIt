@@ -15,9 +15,22 @@
  */
 package com.example.android.didyoufeelit;
 
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.widget.TextView;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.nio.charset.Charset;
+
+import static com.example.android.didyoufeelit.Utils.LOG_TAG;
 
 /**
  * Displays the perceived strength of a single earthquake event based on responses from people who
@@ -35,10 +48,66 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         // Perform the HTTP request for earthquake data and process the response.
-        Event earthquake = Utils.fetchEarthquakeData(USGS_REQUEST_URL);
-
+        //Event earthquake = Utils.fetchEarthquakeData(USGS_REQUEST_URL);
+        new FetchEarthquakeData().execute(USGS_REQUEST_URL);
         // Update the information displayed to the user.
-        updateUi(earthquake);
+
+    }
+
+    private class FetchEarthquakeData extends AsyncTask<String,Void,Event>
+    {
+        @Override
+        protected Event doInBackground(String... requestUrl) {
+            String jsonResponse = "";
+
+            URL url = null;
+            try {
+                url = new URL(requestUrl[0]);
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+            // If the URL is null, then return early.
+
+            HttpURLConnection urlConnection = null;
+            InputStream inputStream = null;
+            try {
+                urlConnection = (HttpURLConnection) url.openConnection();
+                urlConnection.setReadTimeout(10000 /* milliseconds */);
+                urlConnection.setConnectTimeout(15000 /* milliseconds */);
+                urlConnection.setRequestMethod("GET");
+                urlConnection.connect();
+
+                // If the request was successful (response code 200),
+                // then read the input stream and parse the response.
+                if (urlConnection.getResponseCode() == 200) {
+                    inputStream = urlConnection.getInputStream();
+                    jsonResponse = Utils.readFromStream(inputStream);
+                } else {
+                    Log.e(LOG_TAG, "Error response code: " + urlConnection.getResponseCode());
+                }
+            } catch (IOException e) {
+                Log.e(LOG_TAG, "Problem retrieving the earthquake JSON results.", e);
+            } finally {
+                if (urlConnection != null) {
+                    urlConnection.disconnect();
+                }
+                if (inputStream != null) {
+                    try {
+                        inputStream.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            Event earthquake = Utils.extractFeatureFromJson(jsonResponse);
+            return earthquake;
+        }
+
+        @Override
+        protected void onPostExecute(Event earthquake) {
+            super.onPostExecute(earthquake);
+            updateUi(earthquake);
+        }
     }
 
     /**
