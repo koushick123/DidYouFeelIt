@@ -62,6 +62,10 @@ public class MainActivity extends AppCompatActivity {
 
             URL url = null;
             try {
+                if(requestUrl == null)
+                {
+                    return null;
+                }
                 url = new URL(requestUrl[0]);
             } catch (MalformedURLException e) {
                 e.printStackTrace();
@@ -105,8 +109,10 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onPostExecute(Event earthquake) {
-            super.onPostExecute(earthquake);
-            updateUi(earthquake);
+            if(earthquake != null) {
+                super.onPostExecute(earthquake);
+                updateUi(earthquake);
+            }
         }
     }
 
